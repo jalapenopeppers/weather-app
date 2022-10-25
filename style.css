@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Dosis:wght@200;300&family=Quicksand:wght@300&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.content {
+  display: grid;
+  /* font-family: 'Dosis', sans-serif; */
+  font-family: 'Quicksand', sans-serif;
+  font-size: 20px;
+}
+
+.main-content-grid {
+  max-width: 80vw;
+  justify-self: center;
+  display: grid;
+  gap: 20px;
+}
+
+.current-weather-grid {
+  display: grid;
+  grid-template-rows: repeat(2, min-content);
+  gap: 20px;
+}
+
+form.search-location,
+.location-title {
+  place-self: center;
+}
+
+.current-weather-data {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+}
+
+.left-data {
+  display: grid;
+  grid-template: 4fr 1fr / repeat(2, 4fr) 1fr;
+}
+
+/* .current-temp-container {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+} */
+button.change-units-button {
+  width: 20px;
+  height: 20px;
+}
+
+.left-data .current-temp {
+  font-size: 140px;
+}
+.current-weather-description,
+.feels-like {
+  justify-self: center;
+}
+.current-weather-icon {
+  place-self: center;
+}
+
+.right-data {
+  /* font-size: 30px; */
+  display: grid;
+  grid-template-rows: repeat(4, min-content);
+  gap: 5px;
+}
+
+.high-low-temps-container {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 20px;
+}
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}

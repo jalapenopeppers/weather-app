@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- <script src="javascript.js" defer></script> -->
+  <link rel="stylesheet" href="style.css">
+  <title>Weather</title>
+</head>
+<body>
+  <div class="content">
+    <div class="main-content-grid">
+      <div class="current-weather-grid">
+        <form class="search-location">
+          <input type="search" id="search-weather" placeholder="Miami, US" value="Miami, US">
+          <button type="button" onclick="getWeather(document.querySelector('input').value)">Get weather</button>
+        </form>
+        <div class="location-title">Miami</div>
+        <div class="current-weather-data">
+          <div class="left-data">
+            <div class="current-weather-icon">Icon</div>
+            <div class="current-temp">76°</div>
+            <button class="change-units-button">F</button>
+            <div class="current-weather-description">Partly Cloudy</div>
+            <div class="feels-like">Feels like: 78°</div>
+          </div>
+          <div class="right-data">
+            <div class="high-low-temps-container">
+              <div class="high-temp">H: 83</div>
+              <div class="low-temp">L: 70</div>
+            </div>
+            <div class="humidity">Humidity: 60%</div>
+            <div class="rain-probability">Rain: 0%</div>
+            <div class="sun-container">
+              Sun:
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="forecast-grid">
+        <div class="forecast-0-hour">
+          <div class="forecast-time">Now</div>
+          <div class="forecast-icon"></div>
+          <div class="forecast-temp">76</div>
+          <div class="forecast-rain">Rain: 10%</div>
+        </div>
+        <div class="forecast-1-hour">
+          <div class="forecast-time">8pm</div>
+          <div class="forecast-icon"></div>
+          <div class="forecast-temp">76</div>
+          <div class="forecast-rain">Rain: 10%</div>
+        </div>
+        <div class="forecast-2-hour">
+          <div class="forecast-time">9pm</div>
+          <div class="forecast-icon"></div>
+          <div class="forecast-temp">76</div>
+          <div class="forecast-rain">Rain: 10%</div>
+        </div>
+        <div class="forecast-3-hour">
+          <div class="forecast-time">10pm</div>
+          <div class="forecast-icon"></div>
+          <div class="forecast-temp">76</div>
+          <div class="forecast-rain">Rain: 10%</div>
+        </div>
+        <div class="forecast-4-hour">
+          <div class="forecast-time">11pm</div>
+          <div class="forecast-icon"></div>
+          <div class="forecast-temp">76</div>
+          <div class="forecast-rain">Rain: 10%</div>
+        </div>
+        <div class="forecast-5-hour">
+          <div class="forecast-time">12am</div>
+          <div class="forecast-icon"></div>
+          <div class="forecast-temp">76</div>
+          <div class="forecast-rain">Rain: 10%</div>
+        </div>
+        <button class="switch-forecasts-button">Switch</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
