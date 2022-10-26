@@ -36,17 +36,17 @@ function getLocation(locationStr) {
 }
 
 // Returns weather object with all necessary data used in the application
-async function getAllWeatherData(locationStr) {
+async function getAllWeatherData(locationStr, units) {
   let locationInfo = await getLocation(locationStr);
-  let weatherInfo = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${locationInfo['lat']}&lon=${locationInfo['lon']}&appid=${API_KEY}`)
+  let weatherInfo = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${locationInfo['lat']}&lon=${locationInfo['lon']}&appid=${API_KEY}&units=${units}`)
     .then((response) => response.json())
     .catch((err) => console.log(err));
   console.log(weatherInfo);
   return weatherInfo;
 }
 
-async function getWeather(locationStr) {
-  let allWeatherInfo = await getAllWeatherData(locationStr);
+async function getWeather(locationStr, units='imperial') {
+  let allWeatherInfo = await getAllWeatherData(locationStr, units);
   let usedWeatherInfo = {
     'locationName': allWeatherInfo.name,
     'temperature': allWeatherInfo.main.temp,
@@ -60,5 +60,33 @@ async function getWeather(locationStr) {
     'sunSet': allWeatherInfo.sys.sunset,
   }
   console.log(usedWeatherInfo);
+  updatePage(usedWeatherInfo);
 }
 getWeather('Miami, US');
+
+function updatePage(usedWeatherInfo) {
+  let locationTitle = document.querySelector('.location-title');
+  locationTitle.textContent = usedWeatherInfo.locationName;
+
+  let temperature = document.querySelector('.current-temp');
+  temperature.textContent = `${usedWeatherInfo.temperature}°`;
+
+  let feelsLike = document.querySelector('.feels-like');
+  feelsLike.textContent = `Feels like: ${usedWeatherInfo.feelsLike}°`;
+
+  let description = document.querySelector('.current-weather-description');
+  description.textContent = usedWeatherInfo.description;
+
+  let tempHigh = document.querySelector('.high-temp');
+  tempHigh.textContent = `H: ${usedWeatherInfo.tempHigh}°`;
+
+  let tempLow = document.querySelector('.low-temp');
+  tempLow.textContent = `L: ${usedWeatherInfo.tempLow}°`;
+
+  let humidity = document.querySelector('.humidity');
+  humidity.textContent = `Humidity: ${usedWeatherInfo.humidity}`;
+  
+  // assign value to rain chance
+  
+  // assign value to sunrise/set
+}
