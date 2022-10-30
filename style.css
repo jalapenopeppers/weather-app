@@ -3,13 +3,18 @@
 * {
   margin: 0;
   padding: 0;
+  color: black;
 }
 
 .content {
+  /* height: 100vh; */
   display: grid;
   /* font-family: 'Dosis', sans-serif; */
   font-family: 'Quicksand', sans-serif;
   font-size: 20px;
+  /* background-image: url('./gifs/Smoke\ Sun\ GIF\ by\ Living\ Stills\ -\ Find\ &\ Share\ on\ GIPHY.gif'); */
+  /* background-image: url('./gifs/_.gif'); */
+  /* background-size: cover; */
 }
 
 .main-content-grid {
