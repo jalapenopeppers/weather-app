@@ -18,6 +18,7 @@
 }
 
 .main-content-grid {
+  margin-top: 50px;
   max-width: 80vw;
   justify-self: center;
   display: grid;
@@ -62,7 +63,11 @@ button.change-units-button {
 .feels-like {
   justify-self: center;
 }
-.current-weather-icon {
+img.current-weather-icon {
+  width: 120px;
+  height: 120px;
+  /* stroke: black;
+  stroke-width: 1px; */
   place-self: center;
 }
 
@@ -81,5 +86,20 @@ button.change-units-button {
 
 .forecast-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(6, 1fr);
+  transition: 0.5s;
+}
+
+.forecast-grid-container {
+  height: 50%;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+}
+
+button.switch-forecasts-button {
+  width: 40px;
+  height: 40px;
+  margin: 20px;
+  justify-self: center;
 }
