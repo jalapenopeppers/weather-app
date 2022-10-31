@@ -58,7 +58,7 @@ async function getAllForecastData(locationStr, units) {
 
 // Returns object with the hourly forecasts for the next several hours.
 //   The free version of OpenWeather API allows hourly forecasts in 3 hour blocks
-function getHourlyForecast(allForecastData) {
+function getHourlyForecast(allForecastData, timezoneOffset) {
   let dataPoints = allForecastData['list'];
   let hourlyForecast = {};
   let hourIndex = 0;
@@ -67,7 +67,8 @@ function getHourlyForecast(allForecastData) {
       break;
     }
    hourlyForecast[`${hourIndex}hr`] = {
-     'hour': unixToHour(dataPoint.dt),
+     'hour': unixToHour(dataPoint.dt, timezoneOffset),
+     'time': dataPoint.dt,
      'temp': Math.round(dataPoint.main.temp),
      'description': dataPoint.weather['0'].description,
      'category': dataPoint.weather['0'].main,
@@ -81,7 +82,7 @@ function getHourlyForecast(allForecastData) {
 
 // Returns object with the daily forecasts for the next several days.
 //   The forecasts are made by averaging the hourly forecasts
-function getDailyForecast(allForecastData) {
+function getDailyForecast(allForecastData, timezoneOffset) {
   let dataPoints = allForecastData['list'];
   let dailyForecast = {};
   let index = 1;
@@ -92,7 +93,7 @@ function getDailyForecast(allForecastData) {
     if (index % 8 === 0) {
       dayIndex++;
       dailyForecast[`${dayIndex}d`] = {
-        'day': unixToDay(dataPoint.dt),
+        'day': unixToDay(dataPoint.dt, timezoneOffset),
         'temp': Math.round(tempSum / 8),
         'description': dataPoint.weather['0'].description, // fix this to be more accurate
         'category': dataPoint.weather['0'].main,
@@ -110,24 +111,43 @@ function getDailyForecast(allForecastData) {
 }
 
 // Returns given UNIX time in seconds into an hour time
-function unixToHour(unixTime) {
-  let milliSec = unixTime * 1000;
+function unixToHour(unixTime, timezoneOffset) {
+  let milliSec = (unixTime + timezoneOffset) * 1000;
   const dateObj = new Date(milliSec);
-  let hours = dateObj.getHours();
-  let hourStr = '';
-  if (hours < 12) {
-    hourStr = `${hours} am`;
+  let hours = dateObj.getUTCHours();
+  let timeStr = '';
+  if (hours === 0) {
+    timeStr = `12 am`;
+  } else if (hours < 13) {
+    timeStr = `${hours} am`;
   } else {
-    hourStr =  `${hours - 12} pm`;
+    timeStr =  `${hours - 12} pm`;
   }
-  return hourStr;
+  return timeStr;
+}
+
+// Returns given UNIX time in seconds into a time of form #:## am (ex: 7:45 pm)
+function unixToFullHour(unixTime, timezoneOffset) {
+  let milliSec = (unixTime + timezoneOffset) * 1000;
+  const dateObj = new Date(milliSec);
+  let hours = dateObj.getUTCHours();
+  let minutes = dateObj.getUTCMinutes();
+  let timeStr = '';
+  if (hours === 0) {
+    timeStr = `12:${String(minutes).padStart(2, '0')} am`;
+  } else if (hours < 13) {
+    timeStr = `${hours}:${String(minutes).padStart(2, '0')} am`;
+  } else {
+    timeStr =  `${hours - 12}:${String(minutes).padStart(2, '0')} pm`;
+  }
+  return timeStr;
 }
 
 // Returns given UNIX time in seconds into a day string
-function unixToDay(unixTime) {
-  let milliSec = unixTime * 1000;
+function unixToDay(unixTime, timezoneOffset) {
+  let milliSec = (unixTime + timezoneOffset) * 1000;
   const dateObj = new Date(milliSec);
-  let day = dateObj.getDay();
+  let day = dateObj.getUTCDay();
   let dayStr = '';
   if (day === 0) {
     dayStr = 'Sun';
@@ -148,6 +168,11 @@ function unixToDay(unixTime) {
   return dayStr;
 }
 
+// Returns given string with first letter capitalized
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 async function getWeather(locationStr, units='imperial') {
   let allWeatherInfo = await getAllWeatherData(locationStr, units);
   console.log(allWeatherInfo);
@@ -160,22 +185,23 @@ async function getWeather(locationStr, units='imperial') {
     'tempHigh': allWeatherInfo.main.temp_max,
     'tempLow': allWeatherInfo.main.temp_min,
     'humidity': allWeatherInfo.main.humidity,
-    // 'rainProbability'
     'time' : allWeatherInfo.dt,
-    'sunRise': allWeatherInfo.sys.sunrise,
-    'sunSet': allWeatherInfo.sys.sunset,
+    'timezoneOffset' : allWeatherInfo.timezone,
+    'sunrise': allWeatherInfo.sys.sunrise,
+    'sunset': allWeatherInfo.sys.sunset,
   }
-  // console.log(usedWeatherInfo);
+  console.log(usedWeatherInfo.time < usedWeatherInfo.sunrise);
 
   let allForecastData = await getAllForecastData(locationStr, units);
   console.log(allForecastData);
-  let hourlyForecast = getHourlyForecast(allForecastData);
+  let hourlyForecast = getHourlyForecast(allForecastData, usedWeatherInfo.timezoneOffset);
   console.log(hourlyForecast);
-  let dailyForecast = getDailyForecast(allForecastData);
+  let dailyForecast = getDailyForecast(allForecastData, usedWeatherInfo.timezoneOffset);
   console.log(dailyForecast);
   updatePage(usedWeatherInfo, hourlyForecast, dailyForecast);
 }
 
+// Updates site visually
 function updatePage(usedWeatherInfo, hourlyForecast, dailyForecast) {
   let locationTitle = document.querySelector('.location-title');
   locationTitle.textContent = usedWeatherInfo.locationName;
@@ -195,7 +221,7 @@ function updatePage(usedWeatherInfo, hourlyForecast, dailyForecast) {
   feelsLike.textContent = `Feels like: ${Math.round(usedWeatherInfo.feelsLike)}°`;
 
   let description = document.querySelector('.current-weather-description');
-  description.textContent = usedWeatherInfo.description;
+  description.textContent = capitalizeFirstLetter(usedWeatherInfo.description);
 
   let tempHigh = document.querySelector('.high-temp');
   tempHigh.textContent = `H: ${Math.round(usedWeatherInfo.tempHigh)}°`;
@@ -209,18 +235,35 @@ function updatePage(usedWeatherInfo, hourlyForecast, dailyForecast) {
   let currentRain = document.querySelector('.rain-probability');
   currentRain.textContent = `Rain: ${hourlyForecast['0hr'].rain}%`;
 
-  // assign value to sunrise/set
+  let sunriseTime = document.querySelector('.sunrise-time-text');
+  sunriseTime.textContent = unixToFullHour(usedWeatherInfo.sunrise, usedWeatherInfo.timezoneOffset);
+
+  let sunsetTime = document.querySelector('.sunset-time-text');
+  sunsetTime.textContent = unixToFullHour(usedWeatherInfo.sunset, usedWeatherInfo.timezoneOffset);
 
   // update hourly forecast values
   let forecastNow = document.querySelector('.forecast-0-hour');
-  // update icon
+  
+  let forecastNowHourlyIcon = document.querySelector('.forecast-0-hour img.forecast-icon');
+  forecastNowHourlyIcon.setAttribute('src', getIcon(
+    usedWeatherInfo.category, 
+    usedWeatherInfo.description, 
+    usedWeatherInfo.time, 
+    usedWeatherInfo.sunset
+  ));
+
   let forecastNowTemp = document.querySelector('.forecast-0-hour .forecast-temp');
   forecastNowTemp.textContent = `${Math.round(usedWeatherInfo.temperature)}°`;
   for (let i = 1; i < 6; i++) {
     let hourlyForecastTime = document.querySelector(`.forecast-${i}-hour .forecast-time`);
     hourlyForecastTime.textContent = `${hourlyForecast[`${i - 1}hr`].hour}`;
     let hourlyForecastIcon = document.querySelector(`.forecast-${i}-hour .forecast-icon`);
-    // hourlyForecastTime.textContent = hourlyForecast{`${i - 1}hr`}.hour;
+    hourlyForecastIcon.setAttribute('src', getIcon(
+      hourlyForecast[`${i-1}hr`].category, 
+      hourlyForecast[`${i-1}hr`].description, 
+      hourlyForecast[`${i-1}hr`].time, 
+      usedWeatherInfo.sunset
+    ));
     let hourlyForecastTemp = document.querySelector(`.forecast-${i}-hour .forecast-temp`);
     hourlyForecastTemp.textContent = `${hourlyForecast[`${i - 1}hr`].temp}°`;
     let hourlyForecastRain = document.querySelector(`.forecast-${i}-hour .forecast-rain`);
@@ -230,14 +273,25 @@ function updatePage(usedWeatherInfo, hourlyForecast, dailyForecast) {
   // update daily forecast values
   let forecastNowDailyTemp = document.querySelector('.forecast-0-day .forecast-temp');
   forecastNowDailyTemp.textContent = `${Math.round(usedWeatherInfo.temperature)}°`;
-  // Update icon
+  
+  let forecastNowDailyIcon = document.querySelector('.forecast-0-day img.forecast-icon');
+  forecastNowDailyIcon.setAttribute('src', getIcon(
+    usedWeatherInfo.category, 
+    usedWeatherInfo.description, 
+    usedWeatherInfo.time, 
+    usedWeatherInfo.sunset
+  ));
+
   let forecastNowDailyRain = document.querySelector('.forecast-0-day .forecast-rain');
   forecastNowDailyRain.textContent = `🌧${hourlyForecast['0hr'].rain}%`;
   for (let i = 1; i < 6; i++) {
     let dailyForecastTime = document.querySelector(`.forecast-${i}-day .forecast-time`);
     dailyForecastTime.textContent = `${dailyForecast[`${i}d`].day}`;
     let dailyForecastIcon = document.querySelector(`.forecast-${i}-day .forecast-icon`);
-    // dailyForecastIcon.textContent = dailyForecast{`${i}d`}.hour;
+    dailyForecastIcon.setAttribute('src', getIcon(
+      dailyForecast[`${i}d`].category, 
+      dailyForecast[`${i}d`].description,
+    ));
     let dailyForecastTemp = document.querySelector(`.forecast-${i}-day .forecast-temp`);
     dailyForecastTemp.textContent = `${dailyForecast[`${i}d`].temp}°`;
     let dailyForecastRain = document.querySelector(`.forecast-${i}-day .forecast-rain`);
@@ -268,19 +322,20 @@ function getIcon(categoryStr, description, currentTime = 0, sunsetTime = 0) {
   } else if (categoryStr === 'Snow') {
     iconPath = './icons/weather-snow-heavy.svg';
   } else if (categoryStr === 'Clear') {
-    if (currentTime < sunsetTime) {
-      iconPath = './icons/weather-night.svg';
-    } else {
+    console.log(currentTime + ' ' + sunsetTime);
+    if (currentTime <= sunsetTime) {
       iconPath = './icons/weather-sunny.svg';
+    } else {
+      iconPath = './icons/weather-night.svg';
     }
   } else if (categoryStr === 'Clouds') {
-    if (currentTime < sunsetTime) {
-      iconPath = './icons/weather-night-partly-cloudy.svg';
+    if (currentTime <= sunsetTime) {
+      iconPath = './icons/weather-partly-cloudy.svg';
     } else {
       if (description === 'overcast clouds') {
         iconPath = './icons/weather-cloudy.svg';
       } else {
-        iconPath = './icons/weather-partly-cloudy.svg';
+        iconPath = './icons/weather-night-partly-cloudy.svg';
       }
     }
   }
