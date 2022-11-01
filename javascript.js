@@ -27,7 +27,7 @@ function getLocation(locationStr) {
         'lat': locationJSON['lat'],
         'lon': locationJSON['lon'],
         'city': locationJSON['name'],
-        'state': locationJSON['lat'] !== undefined ? locationJSON['lat'] : 'none',
+        'state': locationJSON['state'] !== undefined ? locationJSON['state'] : 'none',
         'country': locationJSON['country'],
       };
       return requiredInfo;
@@ -43,8 +43,7 @@ async function getAllWeatherData(locationStr, units) {
   let weatherInfo = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${locationInfo['lat']}&lon=${locationInfo['lon']}&appid=${API_KEY}&units=${units}`)
     .then((response) => response.json())
     .catch((err) => console.log(err));
-  console.log(weatherInfo);
-  return weatherInfo;
+  return Object.assign({'locationInfo' : locationInfo}, weatherInfo);
 }
 
 // Returns object with all necessary data used for forecast
@@ -175,9 +174,11 @@ function capitalizeFirstLetter(string) {
 
 async function getWeather(locationStr, units='imperial') {
   let allWeatherInfo = await getAllWeatherData(locationStr, units);
-  console.log(allWeatherInfo);
+  // console.log(allWeatherInfo);
   let usedWeatherInfo = {
     'locationName': allWeatherInfo.name,
+    'locationState': allWeatherInfo.locationInfo.state,
+    'locationCountry': allWeatherInfo.locationInfo.country,
     'temperature': allWeatherInfo.main.temp,
     'feelsLike': allWeatherInfo.main.feels_like,
     'description': allWeatherInfo.weather[0].description,
@@ -190,7 +191,7 @@ async function getWeather(locationStr, units='imperial') {
     'sunrise': allWeatherInfo.sys.sunrise,
     'sunset': allWeatherInfo.sys.sunset,
   }
-  console.log(usedWeatherInfo.time < usedWeatherInfo.sunrise);
+  console.log(usedWeatherInfo);
 
   let allForecastData = await getAllForecastData(locationStr, units);
   console.log(allForecastData);
@@ -203,17 +204,30 @@ async function getWeather(locationStr, units='imperial') {
 
 // Updates site visually
 function updatePage(usedWeatherInfo, hourlyForecast, dailyForecast) {
+  let body = document.querySelector('body');
+  body.style.backgroundImage =  `url(${getBackgroundImage(
+    usedWeatherInfo.category, 
+    usedWeatherInfo.description, 
+    usedWeatherInfo.time, 
+    usedWeatherInfo.sunset
+  )})`;
+  
   let locationTitle = document.querySelector('.location-title');
-  locationTitle.textContent = usedWeatherInfo.locationName;
+  if (usedWeatherInfo.locationState !== 'none') {
+    locationTitle.textContent = `${usedWeatherInfo.locationName}, ${usedWeatherInfo.locationState}`;
+  } else {
+    locationTitle.textContent = `${usedWeatherInfo.locationName}, ${usedWeatherInfo.locationCountry}`;
+  }
 
   let temperature = document.querySelector('.current-temp');
-  temperature.textContent = `${Math.round(usedWeatherInfo.temperature)}°`;
+  temperature.textContent = `${Math.round(usedWeatherInfo.temperature)}`;
 
   let icon = document.querySelector('img.current-weather-icon');
   icon.setAttribute('src', getIcon(
     usedWeatherInfo.category, 
     usedWeatherInfo.description, 
     usedWeatherInfo.time, 
+    usedWeatherInfo.sunrise,
     usedWeatherInfo.sunset
   ));
 
@@ -249,6 +263,7 @@ function updatePage(usedWeatherInfo, hourlyForecast, dailyForecast) {
     usedWeatherInfo.category, 
     usedWeatherInfo.description, 
     usedWeatherInfo.time, 
+    usedWeatherInfo.sunrise,
     usedWeatherInfo.sunset
   ));
 
@@ -261,9 +276,11 @@ function updatePage(usedWeatherInfo, hourlyForecast, dailyForecast) {
     hourlyForecastIcon.setAttribute('src', getIcon(
       hourlyForecast[`${i-1}hr`].category, 
       hourlyForecast[`${i-1}hr`].description, 
-      hourlyForecast[`${i-1}hr`].time, 
+      hourlyForecast[`${i-1}hr`].time,
+      usedWeatherInfo.sunrise,
       usedWeatherInfo.sunset
     ));
+    // console.log(`Current time: ${usedWeatherInfo.time}, Sunrise: ${usedWeatherInfo.sunrise}, Sunset: ${usedWeatherInfo.sunset}`);
     let hourlyForecastTemp = document.querySelector(`.forecast-${i}-hour .forecast-temp`);
     hourlyForecastTemp.textContent = `${hourlyForecast[`${i - 1}hr`].temp}°`;
     let hourlyForecastRain = document.querySelector(`.forecast-${i}-hour .forecast-rain`);
@@ -278,7 +295,8 @@ function updatePage(usedWeatherInfo, hourlyForecast, dailyForecast) {
   forecastNowDailyIcon.setAttribute('src', getIcon(
     usedWeatherInfo.category, 
     usedWeatherInfo.description, 
-    usedWeatherInfo.time, 
+    usedWeatherInfo.time,
+    usedWeatherInfo.sunrise,
     usedWeatherInfo.sunset
   ));
 
@@ -303,6 +321,7 @@ function updatePage(usedWeatherInfo, hourlyForecast, dailyForecast) {
 // Switches between displayed forecasss when button is clicked
 function switchDisplayedForecasts() {
   let forecastGrid = document.querySelector('.forecast-grid');
+  // console.log(forecastGrid.dataset.forecastType);
   if (forecastGrid.dataset.forecastType === 'hourly') {
     forecastGrid.dataset.forecastType = 'daily';
     forecastGrid.style.transform = `translate(0, -50%)`;
@@ -313,23 +332,31 @@ function switchDisplayedForecasts() {
 }
 
 // Returns an icon path given a weather category and using the current time
-function getIcon(categoryStr, description, currentTime = 0, sunsetTime = 0) {
+function getIcon(categoryStr, description, currentTime = 0, sunriseTime = 0, sunsetTime = 0) {
+  /*
+    Math explanation: there are 86400 seconds in a day. sunsetTime - sunriseTime gives time in seconds
+      between the events within the current day. Subtracting that from 86400 provides an approximate
+      length of time between the current day's sunset and the next day's sunrise which is then used to
+      estimate the next sunrise time.
+  */
+  let nextSunriseTime = sunsetTime + (86400 - (sunsetTime - sunriseTime));
   let iconPath = '';
   if (categoryStr === 'Thunderstorm') {
     iconPath = './icons/weather-lightning.svg';
   } else if (categoryStr === 'Drizzle' || categoryStr === 'Rain') {
     iconPath = './icons/weather-pouring.svg';
   } else if (categoryStr === 'Snow') {
-    iconPath = './icons/weather-snow-heavy.svg';
+    iconPath = './icons/weather-snowy-heavy.svg';
   } else if (categoryStr === 'Clear') {
-    console.log(currentTime + ' ' + sunsetTime);
-    if (currentTime <= sunsetTime) {
+    if (currentTime <= sunsetTime || currentTime >= nextSunriseTime) {
+      // console.log(`Curr time: ${currentTime} Next sunrise: ${nextSunriseTime}`);
       iconPath = './icons/weather-sunny.svg';
     } else {
       iconPath = './icons/weather-night.svg';
     }
   } else if (categoryStr === 'Clouds') {
-    if (currentTime <= sunsetTime) {
+    if (currentTime <= sunsetTime || currentTime >= nextSunriseTime) {
+      // console.log(`Curr time: ${currentTime} Next sunrise: ${nextSunriseTime}`);
       iconPath = './icons/weather-partly-cloudy.svg';
     } else {
       if (description === 'overcast clouds') {
@@ -342,10 +369,59 @@ function getIcon(categoryStr, description, currentTime = 0, sunsetTime = 0) {
   return iconPath;
 }
 
+// Returns path of background image given current weather and time
+function getBackgroundImage(categoryStr, description, currentTime = 0, sunsetTime = 0) {
+  let iconPath = '';
+  if (categoryStr === 'Clear') {
+    if (currentTime < sunsetTime) {
+      iconPath = './images/day/clear-day.jpg';
+    } else {
+      iconPath = './images/night/clear-night.jpg';
+    }
+  } else if (categoryStr === 'Clouds') {
+    if (currentTime < sunsetTime) {
+      iconPath = './images/day/cloudy-day.jpg';
+    } else {
+      iconPath = './images/night/cloudy-night.jpg';
+    }
+  } else if (categoryStr === 'Rain') {
+    if (currentTime < sunsetTime) {
+      iconPath = './images/day/rainy-day.jpg';
+    } else {
+      iconPath = './images/night/rainy-night.jpg';
+    }
+  } else if (categoryStr === 'Snow') {
+    if (currentTime < sunsetTime) {
+      iconPath = './images/day/snowy-day.jpg';
+    } else {
+      iconPath = './images/night/snowy-night.jpg';
+    }
+  }
+
+  return iconPath;
+}
+
 // Attach event handlers
 function attachEventHandlers() {
-  let switchForecastsButton = document.querySelector('button.switch-forecasts-button');
-  switchForecastsButton.addEventListener('click', switchDisplayedForecasts);
+  let switchUnitsButton = document.querySelector('button.change-units-button');
+  switchUnitsButton.addEventListener('click', (e) => {
+    let currentUnits = e.currentTarget.dataset.units;
+    if (currentUnits === 'F') {
+      e.currentTarget.dataset.units = 'C';
+      e.currentTarget.textContent = 'C';
+      let locationStr = document.querySelector('input#search-weather').value;
+      getWeather(locationStr, 'metric');
+    } else {
+      e.currentTarget.dataset.units = 'F';
+      e.currentTarget.textContent = 'F';
+      let locationStr = document.querySelector('input#search-weather').value;
+      getWeather(locationStr, 'imperial');
+    }
+  });
+  let switchForecastsButton = document.querySelector('.switch-forecasts-button');
+  switchForecastsButton.addEventListener('change', (e) => {
+    switchDisplayedForecasts();
+  });
 }
 
 function setUpApp() {

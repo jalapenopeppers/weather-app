@@ -16,32 +16,36 @@
       <div class="current-weather-grid">
         <form class="search-location">
           <input type="search" id="search-weather" placeholder="Miami, US" value="Miami, US">
-          <button type="button" onclick="getWeather(document.querySelector('input').value)">Get weather</button>
+          <button type="button" onclick="getWeather(document.querySelector('input').value)">
+            <img class="get-weather-icon" src="./icons/magnify.svg" alt="Search icon">
+          </button>
         </form>
-        <div class="location-title">Miami</div>
-        <div class="current-weather-data">
-          <div class="left-data">
-            <img class="current-weather-icon" src=""></img>
-            <div class="current-temp">76°</div>
-            <button class="change-units-button">F</button>
-            <div class="current-weather-description">Partly Cloudy</div>
-            <div class="feels-like">Feels like: 78°</div>
-          </div>
-          <div class="right-data">
-            <div class="high-low-temps-container">
-              <div class="high-temp">H: 83</div>
-              <div class="low-temp">L: 70</div>
+        <div class="data-wrapper">
+          <div class="location-title">Miami</div>
+          <div class="current-weather-data">
+            <div class="left-data">
+              <img class="current-weather-icon" src=""></img>
+              <div class="current-temp">76°</div>
+              <button class="change-units-button" data-units="F">F</button>
+              <div class="current-weather-description">Partly Cloudy</div>
+              <div class="feels-like">Feels like: 78°</div>
             </div>
-            <div class="humidity">Humidity: 60%</div>
-            <div class="rain-probability">Rain: 0%</div>
-            <div class="sun-container">
-              <div class="sunrise-container">
-                <img class="sun-icon" src="./icons/weather-sunset-up.svg" alt="rise" class="sunrise-icon">
-                <div class="sunrise-time-text">7:00 am</div>
+            <div class="right-data">
+              <div class="high-low-temps-container">
+                <div class="high-temp">H: 83</div>
+                <div class="low-temp">L: 70</div>
               </div>
-              <div class="sunset-container">
-                <img class="sun-icon" src="./icons/weather-sunset-down.svg" alt="set" class="sunset-icon">
-                <div class="sunset-time-text"> 7:00 pm</div>
+              <div class="humidity">Humidity: 60%</div>
+              <div class="rain-probability">Rain: 0%</div>
+              <div class="sun-container">
+                <div class="sunrise-container">
+                  <img class="sun-icon" src="./icons/weather-sunset-up.svg" alt="rise" class="sunrise-icon">
+                  <div class="sunrise-time-text">7:00 am</div>
+                </div>
+                <div class="sunset-container">
+                  <img class="sun-icon" src="./icons/weather-sunset-down.svg" alt="set" class="sunset-icon">
+                  <div class="sunset-time-text"> 7:00 pm</div>
+                </div>
               </div>
             </div>
           </div>
@@ -122,7 +126,11 @@
             <div class="forecast-rain">🌧 10%</div>
           </div>
         </div>
-        <button class="switch-forecasts-button">Switch</button>
+        <!-- <button class="switch-forecasts-button">Switch</button> -->
+        <label class="switch-forecasts-button">
+          <input type="checkbox">
+          <span class="slider round"></span>
+        </label>
       </div>
     </div>
   </div>
