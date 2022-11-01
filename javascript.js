@@ -13,7 +13,7 @@ function getLocation(locationStr) {
     'country': '',
   };
   locationStr = locationStr.replace(/\s/g, '');
-  return fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${locationStr}&limit=5&appid=${API_KEY}`, {mode: 'cors'})
+  return fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${locationStr}&limit=5&appid=${API_KEY}`, {mode: 'cors'})
     .then(function(response) {
       let responseJSON = response.json();
       return responseJSON;
