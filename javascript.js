@@ -365,6 +365,8 @@ function getIcon(categoryStr, description, currentTime = 0, sunriseTime = 0, sun
         iconPath = './icons/weather-night-partly-cloudy.svg';
       }
     }
+  } else {
+    iconPath = './icons/weather-cloudy.svg';
   }
   return iconPath;
 }
@@ -395,6 +397,12 @@ function getBackgroundImage(categoryStr, description, currentTime = 0, sunsetTim
       iconPath = './images/day/snowy-day.jpg';
     } else {
       iconPath = './images/night/snowy-night.jpg';
+    }
+  } else {
+    if (currentTime < sunsetTime) {
+      iconPath = './images/day/cloudy-day.jpg';
+    } else {
+      iconPath = './images/night/cloudy-night.jpg';
     }
   }
 
